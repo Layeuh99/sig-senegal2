@@ -210,27 +210,47 @@
         .theme-claire .leaflet-control-locate.active a { color: var(--accent-4) !important; }
         .theme-claire .leaflet-control-locate.active.following a { color: var(--accent-3) !important; }
 
-        /* Ensure modals and query dialogs use dark readable text in light theme */
-        .theme-claire .modal-content,
-        .theme-claire .modal-header,
-        .theme-claire .modal-body,
-        .theme-claire .modal-title,
-        .theme-claire .query-modal-content,
-        .theme-claire .query-modal-header,
-        .theme-claire .query-modal-content *,
-        .theme-claire .query-modal-header * {
+        /* Force readable modal text in light mode (high-specificity, won't affect .theme-dark) */
+        :not(.theme-dark) .modal-content,
+        :not(.theme-dark) .modal-content *,
+        :not(.theme-dark) .modal-header,
+        :not(.theme-dark) .modal-body,
+        :not(.theme-dark) .modal-title,
+        :not(.theme-dark) .modal-footer,
+        :not(.theme-dark) .query-modal-content,
+        :not(.theme-dark) .query-modal-content *,
+        :not(.theme-dark) .query-modal-header,
+        :not(.theme-dark) .query-modal-header * {
             color: #0b2447 !important;
         }
-        .theme-claire .modal-content {
+        :not(.theme-dark) .modal-content {
             background: linear-gradient(180deg, #ffffff 0%, #f5f7fa 100%) !important;
         }
-        .theme-claire .modal-header {
+        :not(.theme-dark) .modal-header {
             border-bottom: 1px solid rgba(102,126,234,0.06) !important;
         }
-        .theme-claire .btn-close {
+        :not(.theme-dark) .modal .btn-close {
+            color: #0b2447 !important;
             filter: none !important;
             opacity: 1 !important;
         }
+        :not(.theme-dark) .modal .btn-close svg,
+        :not(.theme-dark) .modal .btn-close:before {
+            fill: #0b2447 !important;
+            color: #0b2447 !important;
+        }
+        /* Ensure query modal background and controls are legible */
+        :not(.theme-dark) .query-modal { background-color: rgba(0,0,0,0.5) !important; }
+        :not(.theme-dark) .query-modal-content { background: linear-gradient(180deg,#fff,#f5f7fa) !important; color: #0b2447 !important; }
+        :not(.theme-dark) .query-modal-content h3,
+        :not(.theme-dark) .query-modal-content label,
+        :not(.theme-dark) .query-modal-content p,
+        :not(.theme-dark) .query-modal-content .form-group { color: #0b2447 !important; }
+        :not(.theme-dark) .modal .modal-body * { color: #0b2447 !important; }
+
+        /* Fallback: if developer tools or other rules still force white, force for specific ids */
+        #aboutModal *, #spatial-modal *, #attribute-modal * { color: #0b2447 !important; }
+        #aboutModal .modal-content { background: linear-gradient(180deg,#fff,#f5f7fa) !important; }
 
         .theme-dark .leaflet-control-zoom-in,
         .theme-dark .leaflet-control-zoom-out,
