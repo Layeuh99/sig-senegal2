@@ -376,6 +376,54 @@
             border: 2px solid #667eea;
             border-radius: 6px;
         }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            #map {
+                width: 100% !important;
+                margin: 0 !important;
+            }
+            .sidebar { display: none !important; }
+            .sidebar.left, .sidebar.right { display: none !important; }
+            .coordinates { left: 50% !important; transform: translateX(-50%); bottom: 80px !important; font-size: 0.9rem !important; }
+            .leaflet-tooltip.css_Region_1, .leaflet-tooltip.css_localites_5 { display: none !important; }
+            .legend-swatch, .legend-title, #legend-control, #basemaps-control { display: none !important; }
+            .query-modal-content { width: 95% !important; max-width: 420px !important; }
+            .leaflet-popup-content { max-width: 90vw !important; word-break: break-word; }
+            html, body { overflow: hidden; }
+        }
+
+        /* Mobile floating menu */
+        #mobile-menu-btn {
+            display: none;
+            position: fixed;
+            left: 12px;
+            bottom: 20px;
+            z-index: 1100;
+            background: #667eea;
+            color: #fff;
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+            display:flex; align-items:center; justify-content:center;
+        }
+        #mobile-panel {
+            display: none;
+            position: fixed;
+            left: 10px;
+            right: 10px;
+            bottom: 80px;
+            z-index: 2000;
+            background: rgba(255,255,255,0.98);
+            border-radius: 12px;
+            padding: 12px;
+            max-height: 60vh;
+            overflow: auto;
+            box-shadow: 0 12px 36px rgba(0,0,0,0.2);
+        }
+        #mobile-panel.show { display: block; }
         .leaflet-control-layers {
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 247, 250, 0.95) 100%);
             border: 2px solid #667eea;
@@ -796,6 +844,9 @@
 
         <!-- Coordonnées -->
         <div id="coordinates" class="coordinates">Lat: 0.0000, Lng: 0.0000</div>
+        <!-- Mobile controls -->
+        <button id="mobile-menu-btn" title="Outils" aria-label="Ouvrir menu mobile"><i class="fas fa-bars"></i></button>
+        <div id="mobile-panel" role="dialog" aria-hidden="true"></div>
 
         <!-- Scripts -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -2134,6 +2185,63 @@
 
             var geoBtn = document.getElementById('geolocate-btn');
             if (geoBtn) geoBtn.addEventListener('click', function(e){ e.preventDefault(); startGeolocation(); });
+        })();
+
+        // --- Mobile responsive adjustments & mobile panel ---
+        (function() {
+            function applyMobileAdjustments() {
+                var isMobile = window.innerWidth <= 768;
+                // Toggle sidebars visibility
+                document.querySelectorAll('.sidebar').forEach(function(s){ if (isMobile) s.classList.add('collapsed'); else s.classList.remove('collapsed'); });
+                // Close permanent tooltips on mobile to avoid clutter
+                if (typeof layer_Region_1 !== 'undefined' && layer_Region_1.eachLayer) {
+                    layer_Region_1.eachLayer(function(l){ try { if (isMobile) l.closeTooltip(); else l.openTooltip(); } catch(e){} });
+                }
+                if (typeof layer_localites_5 !== 'undefined' && layer_localites_5.eachLayer) {
+                    layer_localites_5.eachLayer(function(l){ try { if (isMobile) l.closeTooltip(); else l.openTooltip(); } catch(e){} });
+                }
+                // Show mobile menu button
+                var mobileBtn = document.getElementById('mobile-menu-btn');
+                if (mobileBtn) mobileBtn.style.display = (isMobile ? 'flex' : 'none');
+                // Adjust map size if needed
+                if (isMobile) map.invalidateSize(false);
+            }
+
+            window.addEventListener('resize', applyMobileAdjustments);
+            window.addEventListener('orientationchange', applyMobileAdjustments);
+            document.addEventListener('DOMContentLoaded', applyMobileAdjustments);
+            // call immediately
+            applyMobileAdjustments();
+
+            var mobileBtn = document.getElementById('mobile-menu-btn');
+            var mobilePanel = document.getElementById('mobile-panel');
+            if (mobileBtn && mobilePanel) {
+                mobileBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (!mobilePanel.classList.contains('show')) {
+                        // populate with current layers & basemaps controls
+                        var content = '<div style="display:flex; gap:8px; justify-content:space-between; align-items:center; margin-bottom:8px;"><strong>Outils</strong><button id="mobile-close-btn" style="border:none;background:transparent;font-size:18px;">&times;</button></div>';
+                        content += document.getElementById('layers-control') ? document.getElementById('layers-control').innerHTML : '';
+                        content += '<hr>';
+                        content += document.getElementById('basemaps-control') ? document.getElementById('basemaps-control').innerHTML : '';
+                        mobilePanel.innerHTML = content;
+                        mobilePanel.classList.add('show');
+                        var closeBtn = document.getElementById('mobile-close-btn');
+                        if (closeBtn) closeBtn.addEventListener('click', function(){ mobilePanel.classList.remove('show'); });
+                        // reattach events for checkboxes in the copied content
+                        setTimeout(function(){
+                            var checkboxes = mobilePanel.querySelectorAll('input[name="layers-overlay"]');
+                            checkboxes.forEach(function(ch){ ch.addEventListener('change', function(){ var name = this.value; var layer = overlays[name]; if (this.checked) map.addLayer(layer); else map.removeLayer(layer); }); });
+                            var basemapRadios = mobilePanel.querySelectorAll('input[name="basemap"]');
+                            basemapRadios.forEach(function(r){ r.addEventListener('change', function(){ var basemapName = this.value; for (var name in basemaps) { if (map.hasLayer(basemaps[name])) map.removeLayer(basemaps[name]); } map.addLayer(basemaps[basemapName]); }); });
+                        }, 50);
+                    } else {
+                        mobilePanel.classList.remove('show');
+                    }
+                });
+                // close when tapping outside
+                document.addEventListener('click', function(e){ if (mobilePanel.classList.contains('show') && !mobilePanel.contains(e.target) && e.target.id !== 'mobile-menu-btn') { mobilePanel.classList.remove('show'); }});
+            }
         })();
         </script>
     </body>
