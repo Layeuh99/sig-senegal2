@@ -97,21 +97,50 @@
             border-radius: 8px;
             background: var(--control-bg);
         }
+        /* Label styles to improve readability */
         .leaflet-tooltip.css_Region_1 {
-            background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85));
-            color: var(--tooltip-text-color);
+            background: linear-gradient(90deg, rgba(255,255,255,0.98), rgba(248,249,255,0.98));
+            color: #0b2447;
+            font-weight: 800;
+            padding: 8px 10px;
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(6, 10, 24, 0.18);
+            border: 2px solid rgba(11,36,71,0.12);
+            font-size: 0.95rem;
+            text-align: center;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .leaflet-tooltip.css_Departement_2,
+        .leaflet-tooltip.css_Arrondissement_3 {
+            background: rgba(255,255,255,0.96);
+            color: #0b2447;
             font-weight: 700;
             padding: 6px 8px;
             border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(6, 10, 24, 0.15);
-            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 4px 12px rgba(6, 10, 24, 0.12);
+            border: 1px solid rgba(11,36,71,0.08);
+            font-size: 0.88rem;
+            pointer-events: none;
+            white-space: nowrap;
         }
         .leaflet-tooltip.css_localites_5 {
-            background: rgba(0,0,0,0.8);
-            color: var(--tooltip-text-color);
+            background: rgba(255,255,255,0.96);
+            color: #0b2447;
             padding: 4px 6px;
             border-radius: 6px;
             font-weight: 600;
+            border: 1px solid rgba(11,36,71,0.06);
+            font-size: 0.82rem;
+            box-shadow: 0 4px 8px rgba(6,10,24,0.08);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        /* Slightly bigger labels on small screens for readability */
+        @media (max-width: 600px) {
+            .leaflet-tooltip.css_Region_1 { font-size: 1.05rem; padding: 10px 12px; }
+            .leaflet-tooltip.css_Departement_2, .leaflet-tooltip.css_Arrondissement_3 { font-size: 0.95rem; padding: 8px 10px; }
+            .leaflet-tooltip.css_localites_5 { font-size: 0.9rem; padding: 6px 8px; }
         }
         /* Cluster appearance */
         .marker-cluster-small { background: linear-gradient(135deg,#4da6ff,#6bcB77); color: #fff; }
