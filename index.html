@@ -2362,6 +2362,27 @@
         <script>
         (function(){
             // Force inline styles for dropdown menus and modals to guarantee contrast
+            function wrapTextNodes(container) {
+                if (!container) return;
+                var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+                var textNodes = [];
+                var node;
+                while (node = walker.nextNode()) {
+                    if (node.nodeValue && node.nodeValue.trim().length > 0) textNodes.push(node);
+                }
+                textNodes.forEach(function(tn){
+                    var parent = tn.parentNode;
+                    // if parent already has color style, skip
+                    if (parent && parent.classList && parent.classList.contains('contrast-text')) return;
+                    var span = document.createElement('span');
+                    span.className = 'contrast-text';
+                    span.style.setProperty('color', '#0b2447', 'important');
+                    // preserve whitespace
+                    span.textContent = tn.nodeValue;
+                    parent.replaceChild(span, tn);
+                });
+            }
+
             function styleMenu(menu){
                 if(!menu) return;
                 try{
@@ -2370,15 +2391,14 @@
                     menu.style.setProperty('color', '#0b2447', 'important');
                     menu.style.setProperty('--text-color', '#0b2447', 'important');
                     menu.classList.add('contrast-forced');
+                    // force element colors
                     Array.from(menu.querySelectorAll('*')).forEach(function(el){
                         try{
                             el.style.setProperty('color', '#0b2447', 'important');
-                            // ensure anchors and labels also display properly
-                            if (el.tagName && (el.tagName.toLowerCase() === 'a' || el.tagName.toLowerCase() === 'label' || el.tagName.toLowerCase() === 'button' || el.tagName.toLowerCase() === 'input' || el.tagName.toLowerCase() === 'select')) {
-                                el.style.setProperty('color', '#0b2447', 'important');
-                            }
                         }catch(err){}
                     });
+                    // ensure raw text nodes are wrapped to override any strange rules
+                    wrapTextNodes(menu);
                 } catch(e){}
             }
 
