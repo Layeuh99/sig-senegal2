@@ -210,6 +210,28 @@
         .theme-claire .leaflet-control-locate.active a { color: var(--accent-4) !important; }
         .theme-claire .leaflet-control-locate.active.following a { color: var(--accent-3) !important; }
 
+        /* Ensure modals and query dialogs use dark readable text in light theme */
+        .theme-claire .modal-content,
+        .theme-claire .modal-header,
+        .theme-claire .modal-body,
+        .theme-claire .modal-title,
+        .theme-claire .query-modal-content,
+        .theme-claire .query-modal-header,
+        .theme-claire .query-modal-content *,
+        .theme-claire .query-modal-header * {
+            color: #0b2447 !important;
+        }
+        .theme-claire .modal-content {
+            background: linear-gradient(180deg, #ffffff 0%, #f5f7fa 100%) !important;
+        }
+        .theme-claire .modal-header {
+            border-bottom: 1px solid rgba(102,126,234,0.06) !important;
+        }
+        .theme-claire .btn-close {
+            filter: none !important;
+            opacity: 1 !important;
+        }
+
         .theme-dark .leaflet-control-zoom-in,
         .theme-dark .leaflet-control-zoom-out,
         .theme-dark .leaflet-control-locate a,
