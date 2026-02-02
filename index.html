@@ -152,6 +152,11 @@
             .leaflet-tooltip.css_Departement_2, .leaflet-tooltip.css_Arrondissement_3 { font-size: 0.95rem; padding: 8px 10px; }
             .leaflet-tooltip.css_localites_5 { font-size: 0.9rem; padding: 6px 8px; }
         }
+
+        /* Label marker (divIcon) styles */
+        .label-div { display:inline-block; background: linear-gradient(180deg,#fff,#f6fbff); color: #0b2447; padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(11,36,71,0.12); box-shadow: 0 6px 18px rgba(6,10,24,0.12); font-weight:700; font-size:0.92rem; white-space:nowrap; pointer-events:none; z-index:99999 !important; }
+        .label-div div { pointer-events: none; }
+        @media (max-width: 600px) { .label-div { font-size: 1.02rem; padding: 8px 12px; } }
         /* Cluster appearance */
         .marker-cluster-small { background: linear-gradient(135deg,#4da6ff,#6bcB77); color: #fff; }
         .marker-cluster-medium { background: linear-gradient(135deg,#ffd166,#ff9f43); color: #222; }
@@ -1883,72 +1888,98 @@
             });
         });
 
-        // Label toggle handlers
-        function bindLabelsToggle(checkboxId, layerRef, propName, tooltipClass) {
-            var cb = document.getElementById(checkboxId);
-            if (!cb) return;
-            cb.addEventListener('change', function() {
-                toggleLabels(layerRef, this.checked, propName, tooltipClass);
-            });
+        // Label layers (divIcon markers) to provide robust, always-visible labels
+        var labelLayer_region = L.layerGroup();
+        var labelLayer_departement = L.layerGroup();
+        var labelLayer_arrondissement = L.layerGroup();
+        var labelLayer_localite = L.layerGroup();
+
+        // configuration per label type
+        var labelConfig = {
+            region: { checkboxId: 'label-region', labelLayer: labelLayer_region, field: 'Région', minZoom: 6, overlay: layer_Region_1, creator: function(){ createLabelsForLayer(layer_Region_1, 'Région', labelLayer_region); } },
+            departement: { checkboxId: 'label-departement', labelLayer: labelLayer_departement, field: 'Département', minZoom: 8, overlay: layer_Departement_2, creator: function(){ createLabelsForLayer(layer_Departement_2, 'Département', labelLayer_departement); } },
+            arrondissement: { checkboxId: 'label-arrondissement', labelLayer: labelLayer_arrondissement, field: 'Arrondissement', minZoom: 8, overlay: layer_Arrondissement_3, creator: function(){ createLabelsForLayer(layer_Arrondissement_3, 'Arrondissement', labelLayer_arrondissement); } },
+            localite: { checkboxId: 'label-localite', labelLayer: labelLayer_localite, field: 'NOM', minZoom: 10, overlay: cluster_localites_5, creator: function(){ createLabelsForLayer(layer_localites_5, 'NOM', labelLayer_localite); } }
+        };
+
+        function escapeHtml(text) {
+            return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
-        bindLabelsToggle('label-region', function(){return layer_Region_1;} , 'Région', 'css_Region_1');
-        bindLabelsToggle('label-departement', function(){return layer_Departement_2;} , 'Département', 'css_Departement_2');
-        bindLabelsToggle('label-arrondissement', function(){return layer_Arrondissement_3;} , 'Arrondissement', 'css_Arrondissement_3');
-        bindLabelsToggle('label-localite', function(){return layer_localites_5;} , 'NOM', 'css_localites_5');
-
-        function toggleLabels(layerGetter, show, fieldName, className) {
-            var layerObj = (typeof layerGetter === 'function') ? layerGetter() : layerGetter;
+        function createLabelsForLayer(layerObj, fieldName, labelLayer) {
             if (!layerObj || !layerObj.eachLayer) return;
+            labelLayer.clearLayers();
             layerObj.eachLayer(function(l){
                 try {
-                    if (show) {
-                        var content = '';
-                        if (l.feature && l.feature.properties && l.feature.properties[fieldName]) {
-                            content = String(l.feature.properties[fieldName]);
-                        } else if (l.getLatLng) {
-                            content = l.getLatLng().lat.toFixed(4) + ', ' + l.getLatLng().lng.toFixed(4);
-                        }
-                        if (content) {
-                            // bind only if not present
-                            if (!l.getTooltip()) {
-                                l.bindTooltip(content, {permanent: true, direction: 'center', className: className, interactive: false, offset: [0,0]});
-                            }
-                            // force open and ensure container visible
-                            try {
-                                l.openTooltip();
-                                if (l._tooltip && l._tooltip._container) {
-                                    l._tooltip._container.style.setProperty('display', 'block', 'important');
-                                    l._tooltip._container.style.setProperty('opacity', '1', 'important');
-                                    l._tooltip._container.style.setProperty('z-index', '99999', 'important');
-                                }
-                            } catch (e) {}
-                        }
-                    } else {
-                        if (l.getTooltip) {
-                            try { l.closeTooltip(); if (l._tooltip && l._tooltip._container) { l._tooltip._container.style.setProperty('display','none','important'); } } catch (e) {}
-                        }
+                    var latlng = null;
+                    if (l.getLatLng) latlng = l.getLatLng();
+                    else if (l.getBounds) latlng = l.getBounds().getCenter();
+                    if (!latlng) return;
+                    var txt = '';
+                    if (l.feature && l.feature.properties && (l.feature.properties[fieldName] || l.feature.properties[fieldName] === 0)) {
+                        txt = l.feature.properties[fieldName];
+                    } else if (l.options && (l.options.name || l.options.title)) {
+                        txt = l.options.name || l.options.title;
                     }
-                } catch(e){}
+                    if (!txt) return;
+                    var html = '<div>' + escapeHtml(txt) + '</div>';
+                    var icon = L.divIcon({ className: 'label-div', html: html, iconSize: null });
+                    var m = L.marker(latlng, { icon: icon, interactive: false });
+                    labelLayer.addLayer(m);
+                } catch (e) { console.warn('label create error', e); }
             });
         }
 
-        // Initialize according to current checkbox states (ensures labels visible on load)
-        document.addEventListener('DOMContentLoaded', function(){
-            ['label-region','label-departement','label-arrondissement','label-localite'].forEach(function(id){
-                var cb = document.getElementById(id);
-                if (cb && cb.checked) {
-                    // small delay to ensure layers are ready
-                    setTimeout(function(){
-                        switch(id) {
-                            case 'label-region': toggleLabels(function(){return layer_Region_1;}, true, 'Région', 'css_Region_1'); break;
-                            case 'label-departement': toggleLabels(function(){return layer_Departement_2;}, true, 'Département', 'css_Departement_2'); break;
-                            case 'label-arrondissement': toggleLabels(function(){return layer_Arrondissement_3;}, true, 'Arrondissement', 'css_Arrondissement_3'); break;
-                            case 'label-localite': toggleLabels(function(){return layer_localites_5;}, true, 'NOM', 'css_localites_5'); break;
-                        }
-                    }, 200);
+        function updateLabelVisibility(key) {
+            var cfg = labelConfig[key];
+            if (!cfg) return;
+            var cb = document.getElementById(cfg.checkboxId);
+            if (!cb) return;
+            var shows = cb.checked && map.getZoom() >= cfg.minZoom && map.hasLayer(cfg.overlay);
+            if (shows) {
+                if (cfg.labelLayer.getLayers().length === 0) cfg.creator();
+                if (!map.hasLayer(cfg.labelLayer)) map.addLayer(cfg.labelLayer);
+            } else {
+                if (map.hasLayer(cfg.labelLayer)) map.removeLayer(cfg.labelLayer);
+            }
+        }
+
+        // Bind checkbox events
+        Object.keys(labelConfig).forEach(function(key){
+            var cfg = labelConfig[key];
+            var cb = document.getElementById(cfg.checkboxId);
+            if (!cb) return;
+            cb.addEventListener('change', function(){
+                if (this.checked) { cfg.creator(); updateLabelVisibility(key); }
+                else { if (map.hasLayer(cfg.labelLayer)) map.removeLayer(cfg.labelLayer); }
+            });
+        });
+
+        // Update labels on zoom and when overlays change
+        map.on('zoomend', function(){ Object.keys(labelConfig).forEach(function(k){ updateLabelVisibility(k); }); });
+
+        // ensure overlay toggles hide labels when overlay removed
+        var overlayCheckboxes = document.querySelectorAll('input[name="layers-overlay"]');
+        overlayCheckboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                var overlayName = this.value;
+                var layer = overlays[overlayName];
+                if (this.checked) {
+                    map.addLayer(layer);
+                } else {
+                    map.removeLayer(layer);
+                    // remove corresponding labels if any
+                    if (overlayName === 'Régions' && map.hasLayer(labelLayer_region)) map.removeLayer(labelLayer_region);
+                    if (overlayName === 'Départements' && map.hasLayer(labelLayer_departement)) map.removeLayer(labelLayer_departement);
+                    if (overlayName === 'Arrondissements' && map.hasLayer(labelLayer_arrondissement)) map.removeLayer(labelLayer_arrondissement);
+                    if (overlayName === 'Localités' && map.hasLayer(labelLayer_localite)) map.removeLayer(labelLayer_localite);
                 }
             });
+        });
+
+        // Initialize labels on load according to checkboxes
+        document.addEventListener('DOMContentLoaded', function(){
+            setTimeout(function(){ Object.keys(labelConfig).forEach(function(k){ updateLabelVisibility(k); }); }, 250);
         });
 
         setBounds();
