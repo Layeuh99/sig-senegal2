@@ -2365,9 +2365,20 @@
             function styleMenu(menu){
                 if(!menu) return;
                 try{
-                    menu.style.background = '#ffffff';
-                    menu.style.color = '#0b2447';
-                    Array.from(menu.querySelectorAll('*')).forEach(function(el){ el.style.color = '#0b2447'; });
+                    // apply inline styles with important priority
+                    menu.style.setProperty('background', '#ffffff', 'important');
+                    menu.style.setProperty('color', '#0b2447', 'important');
+                    menu.style.setProperty('--text-color', '#0b2447', 'important');
+                    menu.classList.add('contrast-forced');
+                    Array.from(menu.querySelectorAll('*')).forEach(function(el){
+                        try{
+                            el.style.setProperty('color', '#0b2447', 'important');
+                            // ensure anchors and labels also display properly
+                            if (el.tagName && (el.tagName.toLowerCase() === 'a' || el.tagName.toLowerCase() === 'label' || el.tagName.toLowerCase() === 'button' || el.tagName.toLowerCase() === 'input' || el.tagName.toLowerCase() === 'select')) {
+                                el.style.setProperty('color', '#0b2447', 'important');
+                            }
+                        }catch(err){}
+                    });
                 } catch(e){}
             }
 
@@ -2439,6 +2450,9 @@
         :root:not(.theme-dark) .dropdown-menu { background: #ffffff !important; color: #0b2447 !important; border: 1px solid rgba(11,36,71,0.06) !important; }
         :root:not(.theme-dark) .dropdown-item { color: #0b2447 !important; }
         :root:not(.theme-dark) .dropdown-item:hover, :root:not(.theme-dark) .dropdown-item:focus { background: rgba(102,126,234,0.08) !important; color: #0b2447 !important; }
+
+        /* Utility class to guarantee forced contrast when added dynamically */
+        .contrast-forced, .contrast-forced * { color: #0b2447 !important; background: #ffffff !important; }
 
         </style>
     </body>
