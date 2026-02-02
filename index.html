@@ -584,6 +584,12 @@
         #legend-control a, #basemaps-control a {
             color: #0b2447 !important;
         }
+        /* Highlight active tool in dropdowns (e.g., Mesure) */
+        #measure.active {
+            background: rgba(102,126,234,0.10);
+            color: #0b2447 !important;
+            font-weight: 600;
+        }
 
         /* Inputs, selects and placeholders in panels */
         .sidebar input, .sidebar select, .sidebar textarea, #mobile-panel input, #mobile-panel select, #mobile-panel textarea {
@@ -1166,6 +1172,14 @@
             secondaryAreaUnit: 'hectares'
         });
         measureControl.addTo(map);
+        map.on('measurestart', function() {
+            var mi = document.getElementById('measure');
+            if (mi) mi.classList.add('active');
+        });
+        map.on('measurefinish', function() {
+            var mi = document.getElementById('measure');
+            if (mi) mi.classList.remove('active');
+        });
         document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
         document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
 
@@ -1718,11 +1732,13 @@
         });
 
         // Recherche
-        map.addControl(new L.Control.Search({
+        var searchControl = new L.Control.Search({
             layer: cluster_localites_5,
             initial: false,
             hideMarkerOnCollapse: true,
-            propertyName: 'NOM'}));
+            propertyName: 'NOM'
+        });
+        map.addControl(searchControl);
         if (typeof url === 'undefined') {
             document.getElementsByClassName('search-button')[0].className += ' fa fa-binoculars';
         } else {
@@ -2381,7 +2397,12 @@
         
         document.getElementById('measure').addEventListener('click', function(e) {
             e.preventDefault();
-            alert('Outil de mesure activé - Utilisez le contrôle sur la carte');
+            var btn = document.getElementsByClassName('leaflet-control-measure-toggle')[0];
+            if (btn) {
+                btn.click();
+            } else {
+                alert('Outil de mesure indisponible');
+            }
         });
         
         document.getElementById('zoom-in').addEventListener('click', function(e) {
@@ -2406,7 +2427,25 @@
         
         document.getElementById('search').addEventListener('click', function(e) {
             e.preventDefault();
-            alert('Utilisez la barre de recherche sur la carte pour chercher des localités');
+            if (typeof searchControl !== 'undefined') {
+                try {
+                    searchControl.expand();
+                    setTimeout(function() {
+                        try { searchControl._input.focus(); } catch (err) {
+                            // fallback to clicking the search button if input not available
+                            var sb = document.getElementsByClassName('search-button')[0];
+                            if (sb) sb.click();
+                        }
+                    }, 50);
+                } catch (err) {
+                    var sb = document.getElementsByClassName('search-button')[0];
+                    if (sb) sb.click();
+                }
+            } else {
+                var sb = document.getElementsByClassName('search-button')[0];
+                if (sb) sb.click();
+                else alert('Barre de recherche non disponible');
+            }
         });
 
         // --- PWA: service worker registration, install prompt handling ---
