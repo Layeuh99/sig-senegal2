@@ -467,6 +467,35 @@
         }
         /* Make sure .legend-title stands out */
         .theme-claire .legend-title { color: #0b2447 !important; font-weight:700 !important; }
+
+        /* Fallback: force readable text color in ALL panels and their contents (high specificity) */
+        .sidebar, .sidebar *,
+        .control-card, .control-card *,
+        #legend-control, #legend-control *,
+        #basemaps-control, #basemaps-control *,
+        #mobile-panel, #mobile-panel *,
+        .query-modal-content, .query-modal-content * {
+            color: #0b2447 !important;
+        }
+
+        /* Ensure links, buttons and dropdown items inside panels are visible */
+        .sidebar a, .sidebar .dropdown-item, .control-card .dropdown-item, #mobile-panel a, #mobile-panel .dropdown-item,
+        #legend-control a, #basemaps-control a {
+            color: #0b2447 !important;
+        }
+
+        /* Inputs, selects and placeholders in panels */
+        .sidebar input, .sidebar select, .sidebar textarea, #mobile-panel input, #mobile-panel select, #mobile-panel textarea {
+            color: #0b2447 !important;
+        }
+        .sidebar ::placeholder, #mobile-panel ::placeholder { color: rgba(11,36,71,0.6) !important; }
+
+        /* Make individual result-item background clearly contrast */
+        .sidebar .result-item, #mobile-panel .result-item, .control-card .result-item {
+            background: rgba(255,255,255,0.96) !important;
+            color: #0b2447 !important;
+        }
+
         .leaflet-control-layers {
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 247, 250, 0.95) 100%);
             border: 2px solid #667eea;
