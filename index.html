@@ -606,6 +606,11 @@
         }
         </style>
         <title>Cartographie web des limites administratives du Sénégal</title>
+        <!-- PWA: manifest & icons -->
+        <link rel="manifest" href="/manifest.json">
+        <meta name="theme-color" content="#667eea">
+        <link rel="icon" href="images/icons/icon-192.svg" sizes="192x192" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="images/icons/apple-touch-icon.svg">
     </head>
     <body>
         <!-- Barre de navigation -->
@@ -649,6 +654,12 @@
                                 <li><a class="dropdown-item" href="#" id="print"><i class="fas fa-print"></i> Impression</a></li>
                                 <li><a class="dropdown-item" href="#" id="search"><i class="fas fa-search"></i> Recherche rapide</a></li>
                             </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="geolocate-btn" title="Localiser"><i class="fas fa-location-crosshairs"></i></a>
+                        </li>
+                        <li class="nav-item" id="install-li" style="display:none;">
+                            <a class="nav-link" href="#" id="install-btn" title="Installer l'application"><i class="fas fa-download"></i></a>
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link" href="#" id="themeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Changer le thème">
@@ -2045,6 +2056,85 @@
             e.preventDefault();
             alert('Utilisez la barre de recherche sur la carte pour chercher des localités');
         });
+
+        // --- PWA: service worker registration, install prompt handling ---
+        (function() {
+            let deferredPrompt = null;
+            window.addEventListener('beforeinstallprompt', function(e) {
+                e.preventDefault();
+                deferredPrompt = e;
+                var installLi = document.getElementById('install-li');
+                if (installLi) installLi.style.display = 'block';
+            });
+
+            var installBtn = document.getElementById('install-btn');
+            if (installBtn) {
+                installBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then(function(choiceResult) {
+                            if (choiceResult.outcome === 'accepted') {
+                                console.log('User accepted the PWA install');
+                            }
+                            deferredPrompt = null;
+                            var installLi = document.getElementById('install-li');
+                            if (installLi) installLi.style.display = 'none';
+                        });
+                    } else {
+                        alert('Installation non disponible');
+                    }
+                });
+            }
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').then(function(reg) {
+                    console.log('Service worker registered.', reg);
+                }).catch(function(err) {
+                    console.warn('Service worker registration failed:', err);
+                });
+            }
+        })();
+
+        // --- Geolocation utilities (simple UX) ---
+        (function() {
+            var userMarker = null;
+            var userCircle = null;
+            var watchId = null;
+
+            function clearUserLocation() {
+                if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
+                if (userCircle) { map.removeLayer(userCircle); userCircle = null; }
+                if (watchId !== null && navigator.geolocation) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+            }
+
+            function showPosition(position, center) {
+                var lat = position.coords.latitude;
+                var lng = position.coords.longitude;
+                var acc = position.coords.accuracy || 0;
+
+                if (userMarker) {
+                    userMarker.setLatLng([lat,lng]);
+                    userCircle.setLatLng([lat,lng]).setRadius(acc);
+                } else {
+                    var icon = L.icon({ iconUrl: 'images/icons/icon-192.svg', iconSize: [36,36] });
+                    userMarker = L.marker([lat,lng], {icon: icon}).addTo(map).bindPopup('Vous êtes ici').openPopup();
+                    userCircle = L.circle([lat,lng], {radius: acc, color: '#1e90ff', fillColor: '#1e90ff', fillOpacity: 0.12}).addTo(map);
+                }
+                if (center) map.setView([lat,lng], 14);
+                var coordEl = document.getElementById('coordinates');
+                if (coordEl) coordEl.innerHTML = 'Lat: ' + lat.toFixed(5) + ', Lng: ' + lng.toFixed(5);
+            }
+
+            function startGeolocation() {
+                if (!('geolocation' in navigator)) { alert('Géolocalisation non supportée par ce navigateur'); return; }
+                navigator.geolocation.getCurrentPosition(function(pos) { showPosition(pos, true); }, function(err){ alert('Erreur de géolocalisation: ' + err.message); }, { enableHighAccuracy: true, timeout: 10000 });
+                watchId = navigator.geolocation.watchPosition(function(pos){ showPosition(pos, false); }, function(err){ console.warn('watch error', err); }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
+            }
+
+            var geoBtn = document.getElementById('geolocate-btn');
+            if (geoBtn) geoBtn.addEventListener('click', function(e){ e.preventDefault(); startGeolocation(); });
+        })();
         </script>
     </body>
 </html>
