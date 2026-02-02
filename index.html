@@ -442,6 +442,31 @@
         .sidebar .btn, .control-card .btn, .sidebar input, .sidebar select {
             color: inherit !important;
         }
+
+        /* Force high-contrast dark text for panels in light theme */
+        .theme-claire .sidebar,
+        .theme-claire .sidebar .sidebar-content,
+        .theme-claire .control-card,
+        .theme-claire #legend-control,
+        .theme-claire #basemaps-control,
+        .theme-claire #mobile-panel {
+            color: #0b2447 !important;
+        }
+        .theme-claire .sidebar a,
+        .theme-claire .sidebar label,
+        .theme-claire #legend-control .legend-title,
+        .theme-claire .control-card .legend-title,
+        .theme-claire .sidebar .btn,
+        .theme-claire .control-card .btn {
+            color: #0b2447 !important;
+        }
+        .theme-claire .sidebar input,
+        .theme-claire .sidebar select,
+        .theme-claire .sidebar .result-item {
+            color: #0b2447 !important;
+        }
+        /* Make sure .legend-title stands out */
+        .theme-claire .legend-title { color: #0b2447 !important; font-weight:700 !important; }
         .leaflet-control-layers {
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 247, 250, 0.95) 100%);
             border: 2px solid #667eea;
