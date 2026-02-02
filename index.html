@@ -1923,8 +1923,9 @@
                     }
                     if (!txt) return;
                     var html = '<div>' + escapeHtml(txt) + '</div>';
-                    var icon = L.divIcon({ className: 'label-div', html: html, iconSize: null });
-                    var m = L.marker(latlng, { icon: icon, interactive: false });
+                    // Use iconAnchor to better center the label, and set pane to markerPane
+                    var icon = L.divIcon({ className: 'label-div', html: html, iconSize: null, iconAnchor: [0, 0] });
+                    var m = L.marker(latlng, { icon: icon, interactive: false, pane: 'markerPane' });
                     labelLayer.addLayer(m);
                 } catch (e) { console.warn('label create error', e); }
             });
@@ -1955,8 +1956,29 @@
             });
         });
 
+        // Debounced refresh: recreate visible labels when the view changes (zoom/pan/resize)
+        var _labelRefreshTimer = null;
+        function refreshAllLabelsDebounced() {
+            if (_labelRefreshTimer) clearTimeout(_labelRefreshTimer);
+            _labelRefreshTimer = setTimeout(function(){
+                Object.keys(labelConfig).forEach(function(k){
+                    var cfg = labelConfig[k];
+                    // if label layer is visible, recreate it to ensure positions are correct
+                    if (document.getElementById(cfg.checkboxId) && document.getElementById(cfg.checkboxId).checked && map.getZoom() >= cfg.minZoom && map.hasLayer(cfg.overlay)) {
+                        cfg.creator();
+                        if (!map.hasLayer(cfg.labelLayer)) map.addLayer(cfg.labelLayer);
+                    }
+                });
+            }, 180);
+        }
+
         // Update labels on zoom and when overlays change
-        map.on('zoomend', function(){ Object.keys(labelConfig).forEach(function(k){ updateLabelVisibility(k); }); });
+        map.on('zoomend moveend resize viewreset', function(){
+            // determine visibility rules
+            Object.keys(labelConfig).forEach(function(k){ updateLabelVisibility(k); });
+            // then refresh positions
+            refreshAllLabelsDebounced();
+        });
 
         // ensure overlay toggles hide labels when overlay removed
         var overlayCheckboxes = document.querySelectorAll('input[name="layers-overlay"]');
@@ -1980,6 +2002,8 @@
         // Initialize labels on load according to checkboxes
         document.addEventListener('DOMContentLoaded', function(){
             setTimeout(function(){ Object.keys(labelConfig).forEach(function(k){ updateLabelVisibility(k); }); }, 250);
+            // also a full refresh to ensure positions
+            setTimeout(function(){ refreshAllLabelsDebounced(); }, 400);
         });
 
         setBounds();
