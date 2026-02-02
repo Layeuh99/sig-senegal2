@@ -2358,5 +2358,28 @@
             }
         })();
         </script>
+
+        <!-- High priority fix: ensure readable text & backgrounds in light mode -->
+        <style id="contrast-fix" type="text/css">
+        :root:not(.theme-dark) body { color: #0b2447 !important; }
+        :root:not(.theme-dark) .sidebar, :root:not(.theme-dark) .sidebar *,
+        :root:not(.theme-dark) .control-card, :root:not(.theme-dark) .control-card *,
+        :root:not(.theme-dark) #aboutModal, :root:not(.theme-dark) #aboutModal *,
+        :root:not(.theme-dark) #spatial-modal, :root:not(.theme-dark) #attribute-modal, :root:not(.theme-dark) #spatial-modal *, :root:not(.theme-dark) #attribute-modal * {
+            color: #0b2447 !important;
+        }
+        :root:not(.theme-dark) .modal-content, :root:not(.theme-dark) .query-modal-content { background: #ffffff !important; color: #0b2447 !important; border: 1px solid rgba(11,36,71,0.06) !important; }
+        :root:not(.theme-dark) .modal .modal-body, :root:not(.theme-dark) .modal .modal-body * { color: #0b2447 !important; }
+        :root:not(.theme-dark) .modal .modal-header, :root:not(.theme-dark) .modal .modal-header * { color: #0b2447 !important; }
+        :root:not(.theme-dark) .modal .btn-close { color: #0b2447 !important; opacity: 1 !important; }
+        :root:not(.theme-dark) .leaflet-control-layers-list label, :root:not(.theme-dark) .leaflet-control-layers-list label * { color: #0b2447 !important; }
+        :root:not(.theme-dark) .query-modal-content h3, :root:not(.theme-dark) .query-modal-content label, :root:not(.theme-dark) .query-modal-content p { color: #0b2447 !important; }
+        /* Force labels inside panels */
+        :root:not(.theme-dark) .sidebar-content label, :root:not(.theme-dark) .sidebar-content h5, :root:not(.theme-dark) .sidebar-content .form-group label { color: #0b2447 !important; }
+        /* Make inputs readable */
+        :root:not(.theme-dark) .sidebar input, :root:not(.theme-dark) .sidebar select, :root:not(.theme-dark) .query-modal-content input, :root:not(.theme-dark) .query-modal-content select { color: #0b2447 !important; }
+        /* Ensure result items are visible */
+        :root:not(.theme-dark) .result-item { background: rgba(255,255,255,0.98) !important; color: #0b2447 !important; }
+        </style>
     </body>
 </html>
