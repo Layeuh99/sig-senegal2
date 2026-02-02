@@ -136,6 +136,16 @@
             pointer-events: none;
             white-space: nowrap;
         }
+
+        /* Force tooltip visibility and stacking */
+        .leaflet-tooltip {
+            z-index: 99999 !important;
+            opacity: 1 !important;
+            display: block !important;
+            pointer-events: none !important;
+        }
+        .leaflet-tooltip .tooltip-inner { background: transparent !important; border: none !important; box-shadow: none !important; }
+
         /* Slightly bigger labels on small screens for readability */
         @media (max-width: 600px) {
             .leaflet-tooltip.css_Region_1 { font-size: 1.05rem; padding: 10px 12px; }
@@ -1904,11 +1914,19 @@
                             if (!l.getTooltip()) {
                                 l.bindTooltip(content, {permanent: true, direction: 'center', className: className, interactive: false, offset: [0,0]});
                             }
-                            l.openTooltip();
+                            // force open and ensure container visible
+                            try {
+                                l.openTooltip();
+                                if (l._tooltip && l._tooltip._container) {
+                                    l._tooltip._container.style.setProperty('display', 'block', 'important');
+                                    l._tooltip._container.style.setProperty('opacity', '1', 'important');
+                                    l._tooltip._container.style.setProperty('z-index', '99999', 'important');
+                                }
+                            } catch (e) {}
                         }
                     } else {
                         if (l.getTooltip) {
-                            try { l.closeTooltip(); } catch (e) {}
+                            try { l.closeTooltip(); if (l._tooltip && l._tooltip._container) { l._tooltip._container.style.setProperty('display','none','important'); } } catch (e) {}
                         }
                     }
                 } catch(e){}
