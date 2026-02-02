@@ -1817,6 +1817,16 @@
             layersHtml += '<label for="overlay-' + overlayName + '" style="cursor: pointer; margin: 0;">' + overlayName + '</label>';
             layersHtml += '</div>';
         }
+
+        // Label toggles
+        layersHtml += '<hr style="margin:10px 0;">';
+        layersHtml += '<h6 style="margin-bottom: 10px; font-weight: 700;">Étiquettes</h6>';
+        layersHtml += '<div style="display:flex; flex-direction:column; gap:8px;">';
+        layersHtml += '<label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="label-region" checked> Régions</label>';
+        layersHtml += '<label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="label-departement" checked> Départements</label>';
+        layersHtml += '<label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="label-arrondissement" checked> Arrondissements</label>';
+        layersHtml += '<label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="label-localite" checked> Localités</label>';
+        layersHtml += '</div>';
         layersHtml += '</div>';
         
         document.getElementById('layers-control').innerHTML = layersHtml;
@@ -1830,6 +1840,66 @@
                     map.addLayer(layer);
                 } else {
                     map.removeLayer(layer);
+                }
+            });
+        });
+
+        // Label toggle handlers
+        function bindLabelsToggle(checkboxId, layerRef, propName, tooltipClass) {
+            var cb = document.getElementById(checkboxId);
+            if (!cb) return;
+            cb.addEventListener('change', function() {
+                toggleLabels(layerRef, this.checked, propName, tooltipClass);
+            });
+        }
+
+        bindLabelsToggle('label-region', function(){return layer_Region_1;} , 'Région', 'css_Region_1');
+        bindLabelsToggle('label-departement', function(){return layer_Departement_2;} , 'Département', 'css_Departement_2');
+        bindLabelsToggle('label-arrondissement', function(){return layer_Arrondissement_3;} , 'Arrondissement', 'css_Arrondissement_3');
+        bindLabelsToggle('label-localite', function(){return layer_localites_5;} , 'NOM', 'css_localites_5');
+
+        function toggleLabels(layerGetter, show, fieldName, className) {
+            var layerObj = (typeof layerGetter === 'function') ? layerGetter() : layerGetter;
+            if (!layerObj || !layerObj.eachLayer) return;
+            layerObj.eachLayer(function(l){
+                try {
+                    if (show) {
+                        var content = '';
+                        if (l.feature && l.feature.properties && l.feature.properties[fieldName]) {
+                            content = String(l.feature.properties[fieldName]);
+                        } else if (l.getLatLng) {
+                            content = l.getLatLng().lat.toFixed(4) + ', ' + l.getLatLng().lng.toFixed(4);
+                        }
+                        if (content) {
+                            // bind only if not present
+                            if (!l.getTooltip()) {
+                                l.bindTooltip(content, {permanent: true, direction: 'center', className: className, interactive: false, offset: [0,0]});
+                            }
+                            l.openTooltip();
+                        }
+                    } else {
+                        if (l.getTooltip) {
+                            try { l.closeTooltip(); } catch (e) {}
+                        }
+                    }
+                } catch(e){}
+            });
+        }
+
+        // Initialize according to current checkbox states (ensures labels visible on load)
+        document.addEventListener('DOMContentLoaded', function(){
+            ['label-region','label-departement','label-arrondissement','label-localite'].forEach(function(id){
+                var cb = document.getElementById(id);
+                if (cb && cb.checked) {
+                    // small delay to ensure layers are ready
+                    setTimeout(function(){
+                        switch(id) {
+                            case 'label-region': toggleLabels(function(){return layer_Region_1;}, true, 'Région', 'css_Region_1'); break;
+                            case 'label-departement': toggleLabels(function(){return layer_Departement_2;}, true, 'Département', 'css_Departement_2'); break;
+                            case 'label-arrondissement': toggleLabels(function(){return layer_Arrondissement_3;}, true, 'Arrondissement', 'css_Arrondissement_3'); break;
+                            case 'label-localite': toggleLabels(function(){return layer_localites_5;}, true, 'NOM', 'css_localites_5'); break;
+                        }
+                    }, 200);
                 }
             });
         });
