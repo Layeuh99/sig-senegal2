@@ -2359,6 +2359,58 @@
         })();
         </script>
 
+        <script>
+        (function(){
+            // Force inline styles for dropdown menus and modals to guarantee contrast
+            function styleMenu(menu){
+                if(!menu) return;
+                try{
+                    menu.style.background = '#ffffff';
+                    menu.style.color = '#0b2447';
+                    Array.from(menu.querySelectorAll('*')).forEach(function(el){ el.style.color = '#0b2447'; });
+                } catch(e){}
+            }
+
+            // Bootstrap dropdown show event
+            document.addEventListener('show.bs.dropdown', function(e){
+                var toggle = e.target.querySelector('.dropdown-toggle') || e.relatedTarget || e.target;
+                var menu = document.querySelector('[aria-labelledby="' + (toggle && toggle.id ? toggle.id : '') + '"]');
+                if(!menu) {
+                    menu = e.target.querySelector('.dropdown-menu');
+                }
+                styleMenu(menu);
+            });
+
+            // Ensure existing menus are styled on DOM ready
+            document.addEventListener('DOMContentLoaded', function(){
+                document.querySelectorAll('.dropdown-menu').forEach(function(menu){ styleMenu(menu); });
+                // attach click to tools toggle to restyle menu
+                var toolsToggle = document.getElementById('toolsDropdown');
+                if (toolsToggle) {
+                    toolsToggle.addEventListener('click', function(){ setTimeout(function(){ var m = document.querySelector('[aria-labelledby="toolsDropdown"]'); styleMenu(m); }, 50); });
+                }
+
+                // Ensure bootstrap modal show styling
+                var aboutModal = document.getElementById('aboutModal');
+                if (aboutModal) {
+                    aboutModal.addEventListener('show.bs.modal', function(){
+                        var content = aboutModal.querySelector('.modal-content');
+                        if (content){ styleMenu(content); }
+                    });
+                }
+
+                // Our custom query modals (display toggled via style) -> hook buttons
+                var spatialBtn = document.getElementById('spatial-query');
+                if (spatialBtn) spatialBtn.addEventListener('click', function(){ setTimeout(function(){ var m = document.getElementById('spatial-modal'); if(m){ var c = m.querySelector('.query-modal-content'); styleMenu(c); } }, 50); });
+                var attributeBtn = document.getElementById('attribute-query');
+                if (attributeBtn) attributeBtn.addEventListener('click', function(){ setTimeout(function(){ var m = document.getElementById('attribute-modal'); if(m){ var c = m.querySelector('.query-modal-content'); styleMenu(c); } }, 50); });
+
+                // Also apply to panels (layers, basemaps, legend)
+                ['layers-control','basemaps-control','legend-control'].forEach(function(id){ var el = document.getElementById(id); if(el) styleMenu(el); });
+            });
+        })();
+        </script>
+
         <!-- High priority fix: ensure readable text & backgrounds in light mode -->
         <style id="contrast-fix" type="text/css">
         :root:not(.theme-dark) body { color: #0b2447 !important; }
