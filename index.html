@@ -2629,6 +2629,80 @@
         })();
         </script>
 
+        <script>
+        (function(){
+            function styleThemeControls(){
+                var el = document.getElementById('theme-controls');
+                // Fallback: find a control-card with 'Thèmes' title
+                if(!el){
+                    var candidates = document.querySelectorAll('.control-card');
+                    for(var i=0;i<candidates.length;i++){
+                        var c = candidates[i];
+                        if (c && c.textContent && c.textContent.trim().indexOf('Thèmes') === 0) { el = c; break; }
+                    }
+                }
+                if(!el) return;
+                try{
+                    el.style.setProperty('background', '#ffffff', 'important');
+                    el.style.setProperty('color', '#0b2447', 'important');
+                    el.style.setProperty('border', '1px solid rgba(11,36,71,0.06)', 'important');
+                    el.style.setProperty('box-shadow', '0 8px 24px rgba(0,0,0,0.06)', 'important');
+                    el.style.setProperty('padding', '10px', 'important');
+                    el.querySelectorAll('*').forEach(function(ch){ try{ ch.style.setProperty('color', '#0b2447', 'important'); }catch(e){} });
+                    var swatches = el.querySelectorAll('.swatch');
+                    swatches.forEach(function(s){ try{ s.style.setProperty('border', '1px solid rgba(11,36,71,0.06)', 'important'); }catch(e){} });
+                }catch(e){console.warn('styleThemeControls err', e);} 
+            }
+            document.addEventListener('DOMContentLoaded', styleThemeControls);
+            // Also run immediately in case injected earlier
+            setTimeout(styleThemeControls, 100);
+
+            // iOS Safari specific enforcement
+            function isIOSSafari() {
+                var ua = navigator.userAgent || '';
+                var isIOS = /iP(hone|od|ad)/.test(navigator.platform) || (ua.includes('Macintosh') && 'ontouchend' in document);
+                var isSafari = /Safari\//.test(ua) && !/CriOS|FxiOS|OPiOS/.test(ua);
+                return isIOS && isSafari;
+            }
+
+            function enforceIOSSafariStyles() {
+                if (!isIOSSafari()) return;
+                var selectors = ['#theme-controls', '.control-card', '.dropdown-menu', '.modal-content', '.query-modal-content', '#aboutModal .modal-content', '#spatial-modal .query-modal-content', '#attribute-modal .query-modal-content', '#basemaps-control', '#legend-control', '#layers-control'];
+                selectors.forEach(function(sel) {
+                    document.querySelectorAll(sel).forEach(function(el) {
+                        try {
+                            el.style.setProperty('background', '#ffffff', 'important');
+                            el.style.setProperty('color', '#0b2447', 'important');
+                            el.style.setProperty('-webkit-text-fill-color', '#0b2447', 'important');
+                            el.style.setProperty('border', '1px solid rgba(11,36,71,0.06)', 'important');
+                            Array.from(el.querySelectorAll('*')).forEach(function(ch){ try { ch.style.setProperty('color', '#0b2447', 'important'); ch.style.setProperty('-webkit-text-fill-color', '#0b2447', 'important'); } catch(e){} });
+                        } catch(e){}
+                    });
+                });
+            }
+
+            // Observe DOM additions (in case panel is added dynamically later)
+            var mo = new MutationObserver(function(mutations){
+                for(var m of mutations){
+                    for(var node of m.addedNodes){
+                        if(node && node.nodeType === 1){
+                            if(node.id === 'theme-controls' || node.querySelector && node.querySelector('#theme-controls')){ styleThemeControls(); enforceIOSSafariStyles(); return; }
+                        }
+                    }
+                }
+            });
+            mo.observe(document.body, { childList: true, subtree: true });
+
+            // Re-apply when user opens basemaps-control or toggles theme
+            var basemapsDiv = document.getElementById('basemaps-control');
+            if (basemapsDiv) basemapsDiv.addEventListener('click', function(){ setTimeout(function(){ styleThemeControls(); enforceIOSSafariStyles(); }, 50); });
+            var themeCycle = document.getElementById('theme-cycle');
+            if (themeCycle) themeCycle.addEventListener('click', function(){ setTimeout(function(){ styleThemeControls(); enforceIOSSafariStyles(); }, 100); });
+            // Also run enforcement once shortly after load for iOS Safari
+            setTimeout(enforceIOSSafariStyles, 150);
+        })();
+        </script>
+
         <!-- High priority fix: ensure readable text & backgrounds in light mode -->
         <style id="contrast-fix" type="text/css">
         :root:not(.theme-dark) body { color: #0b2447 !important; }
