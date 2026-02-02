@@ -424,6 +424,24 @@
             box-shadow: 0 12px 36px rgba(0,0,0,0.2);
         }
         #mobile-panel.show { display: block; }
+
+        /* Ensure panel text contrasts with panel backgrounds */
+        .sidebar, .sidebar .sidebar-content, .control-card, #legend-control, #basemaps-control, #mobile-panel {
+            color: var(--text-color, #0b2447) !important;
+        }
+        /* Make labels, titles and small controls inherit readable color */
+        #legend-control a, #basemaps-control label, #basemaps-control span, .sidebar-content label, .sidebar-content h5, .query-modal-content, .result-item {
+            color: inherit !important;
+        }
+        /* Mobile panel specific adjustments */
+        #mobile-panel .legend-title, #mobile-panel .swatch, #mobile-panel label {
+            color: inherit !important;
+        }
+        #mobile-panel .result-item { background: rgba(255,255,255,0.94); color: inherit; }
+        /* Ensure buttons and inputs inside panels are readable */
+        .sidebar .btn, .control-card .btn, .sidebar input, .sidebar select {
+            color: inherit !important;
+        }
         .leaflet-control-layers {
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 247, 250, 0.95) 100%);
             border: 2px solid #667eea;
