@@ -181,6 +181,21 @@
         }
         .theme-claire .sidebar, .theme-claire .control-card { border-left: 3px solid rgba(77,166,255,0.06); }
         .theme-claire .leaflet-tooltip.css_Region_1 { background: linear-gradient(90deg, rgba(255,255,255,0.98), rgba(248,249,255,0.98)); color: #0b2447; }
+
+        /* Ensure the small theme panel uses a light background and dark text in light theme */
+        :root:not(.theme-dark) #theme-controls {
+            background: linear-gradient(180deg,#ffffff 0%, #f6fbff 100%) !important;
+            color: #0b2447 !important;
+            border: 1px solid rgba(11,36,71,0.06) !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06) !important;
+        }
+        :root:not(.theme-dark) #theme-controls, :root:not(.theme-dark) #theme-controls * {
+            color: #0b2447 !important;
+        }
+        :root:not(.theme-dark) #theme-controls .legend-title { color: #0b2447 !important; }
+        :root:not(.theme-dark) #theme-controls label, :root:not(.theme-dark) #theme-controls input { color: #0b2447 !important; }
+        :root:not(.theme-dark) #theme-controls .swatch { border: 1px solid rgba(11,36,71,0.06) !important; }
+
         /* Navbar subtle gradient for Claire theme */
         .theme-claire { --navbar-bg: linear-gradient(90deg, rgba(77,166,255,0.10), rgba(255,255,255,0.00)); }
 
