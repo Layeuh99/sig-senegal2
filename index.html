@@ -2,6 +2,18 @@
 <html lang="fr" class="theme-claire">
     <head>
         <meta charset="utf-8">
+        <!-- Fix GitHub Pages / mobile Safari: ensure trailing slash so relative asset URLs (data/*.js, css/, js/) resolve correctly -->
+        <script>
+        (function() {
+            try {
+                var p = window.location.pathname || '';
+                // If URL is like /sig-senegal2 (no trailing slash and no file extension), redirect to /sig-senegal2/
+                if (p && !p.endsWith('/') && p.indexOf('.') === -1) {
+                    window.location.replace(p + '/' + window.location.search + window.location.hash);
+                }
+            } catch (e) {}
+        })();
+        </script>
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
         <meta name="mobile-web-app-capable" content="yes">
@@ -1849,7 +1861,7 @@
             totalMarkers += 1;
             layer.added = true;
         });
-        if (ENABLE_LOCALITE_TOOLTIPS) {
+        if (ENABLE_LOCALITE_TOOLTIPS && layer_localites_5 && layer_localites_5.eachLayer) {
             layer_localites_5.eachLayer(function(layer) {
                 var context = {
                     feature: layer.feature,
@@ -1880,13 +1892,20 @@
             map.on("layerremove", resetLabelsHandler);
         }
         
+        function _getLabelLayers() {
+            var arr = [layer_Region_1];
+            // Localités are lazy-loaded. Avoid crashing when the layer isn't created yet.
+            if (layer_localites_5 && layer_localites_5.eachLayer) arr.push(layer_localites_5);
+            return arr;
+        }
+
         function resetLabelsHandler() {
-            resetLabels([layer_Region_1, layer_localites_5]);
+            resetLabels(_getLabelLayers());
         }
         
-        resetLabels([layer_Region_1, layer_localites_5]);
+        resetLabels(_getLabelLayers());
         map.on("zoomend", function(){
-            resetLabels([layer_Region_1, layer_localites_5]);
+            resetLabels(_getLabelLayers());
         });
         map.on("layeradd", resetLabelsHandler);
         map.on("layerremove", resetLabelsHandler);
@@ -2684,7 +2703,7 @@
                 if (typeof layer_Region_1 !== 'undefined' && layer_Region_1.eachLayer) {
                     layer_Region_1.eachLayer(function(l){ try { if (isMobile) l.closeTooltip(); else l.openTooltip(); } catch(e){} });
                 }
-                if (typeof layer_localites_5 !== 'undefined' && layer_localites_5.eachLayer) {
+                if (layer_localites_5 && layer_localites_5.eachLayer) {
                     layer_localites_5.eachLayer(function(l){ try { if (isMobile) l.closeTooltip(); else l.openTooltip(); } catch(e){} });
                 }
                 // Show mobile menu button
