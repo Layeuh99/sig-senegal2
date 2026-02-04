@@ -1107,6 +1107,13 @@
         function highlightFeature(e) {
             highlightLayer = e.target;
 
+            // Enable animated glow when animations are enabled (root has .animations-enabled)
+            try {
+                if (document.documentElement.classList.contains('animations-enabled') && highlightLayer && highlightLayer._path && highlightLayer._path.classList) {
+                    highlightLayer._path.classList.add('glow');
+                }
+            } catch (err) {}
+
             if (e.target.feature.geometry.type === 'LineString' || e.target.feature.geometry.type === 'MultiLineString') {
               highlightLayer.setStyle({
                 color: 'rgba(255, 255, 0, 1.00)',
@@ -1753,6 +1760,8 @@
                 fillOpacity: 0.95,
                 fillColor: color,
                 interactive: true,
+                // Allows CSS hover/animation rules to target locality markers
+                className: 'localite-marker'
             };
         }
         
