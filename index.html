@@ -2521,9 +2521,45 @@
                 });
             }
 
+            // Compute the base path of the app so it works on:
+            // - GitHub Pages: https://layeuh99.github.io/sig-senegal2/
+            // - Tomcat context path: http://host:port/sig-senegal2/
+            var basePath = window.location.pathname;
+            basePath = basePath.endsWith('/') ? basePath : basePath.substring(0, basePath.lastIndexOf('/') + 1);
+
+            // Recovery mode (useful on mobile if an old/broken cache blocks loading):
+            // Open: https://.../sig-senegal2/?nosw=1
+            // It will unregister service workers, clear caches, then reload.
+            try {
+                var params = new URLSearchParams(window.location.search);
+                if (params.has('nosw')) {
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.getRegistrations()
+                            .then(function(regs) { return Promise.all(regs.map(function(r) { return r.unregister(); })); })
+                            .then(function() {
+                                if (window.caches && caches.keys) {
+                                    return caches.keys().then(function(keys) {
+                                        return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+                                    });
+                                }
+                            })
+                            .finally(function() {
+                                window.location.replace(basePath);
+                            });
+                    } else {
+                        window.location.replace(basePath);
+                    }
+                    return;
+                }
+            } catch (e) {
+                // ignore
+            }
+
             if ('serviceWorker' in navigator) {
-                // Use a relative path so it works when the app is served under a context path (e.g. /sig-senegal2)
-                navigator.serviceWorker.register('sw.js').then(function(reg) {
+                // Force SW update by versioning the script URL.
+                // (Changing only index.html is enough to refresh clients.)
+                var swUrl = basePath + 'sw.js?v=20260204-1';
+                navigator.serviceWorker.register(swUrl, { scope: basePath }).then(function(reg) {
                     console.log('Service worker registered.', reg);
                 }).catch(function(err) {
                     console.warn('Service worker registration failed:', err);
