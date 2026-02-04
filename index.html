@@ -1162,16 +1162,21 @@
             position: 'topleft'
         }).addTo(map);
         
-        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+        if (L.control && L.control.locate) {
+            L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+        }
         
-        var measureControl = new L.Control.Measure({
-            position: 'topleft',
-            primaryLengthUnit: 'meters',
-            secondaryLengthUnit: 'kilometers',
-            primaryAreaUnit: 'sqmeters',
-            secondaryAreaUnit: 'hectares'
-        });
-        measureControl.addTo(map);
+        var measureControl = null;
+        if (L.Control && L.Control.Measure) {
+            measureControl = new L.Control.Measure({
+                position: 'topleft',
+                primaryLengthUnit: 'meters',
+                secondaryLengthUnit: 'kilometers',
+                primaryAreaUnit: 'sqmeters',
+                secondaryAreaUnit: 'hectares'
+            });
+            measureControl.addTo(map);
+        }
         map.on('measurestart', function() {
             var mi = document.getElementById('measure');
             if (mi) mi.classList.add('active');
@@ -1180,8 +1185,11 @@
             var mi = document.getElementById('measure');
             if (mi) mi.classList.remove('active');
         });
-        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
-        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+        var measureToggle = document.getElementsByClassName('leaflet-control-measure-toggle')[0];
+        if (measureToggle) {
+            measureToggle.innerHTML = '';
+            measureToggle.className += ' fas fa-ruler';
+        }
 
         // Échelle
         L.control.scale().addTo(map);
@@ -1190,7 +1198,10 @@
         var osmUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
         var osmAttrib = 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors';
         var osm = new L.TileLayer(osmUrl, {minZoom: 0, maxZoom: 13, attribution: osmAttrib});
-        var miniMap = new L.Control.MiniMap(osm, { toggleDisplay: true }).addTo(map);
+        var miniMap = null;
+        if (L.Control && L.Control.MiniMap) {
+            miniMap = new L.Control.MiniMap(osm, { toggleDisplay: true }).addTo(map);
+        }
 
         // Coordonnées dynamiques
         map.on('mousemove', function(e) {
@@ -1732,15 +1743,18 @@
         });
 
         // Recherche
-        var searchControl = new L.Control.Search({
-            layer: layer_localites_5,
-            marker: false,
-            initial: false,
-            hideMarkerOnCollapse: true,
-            propertyName: 'NOM',
-            textPlaceholder: 'Rechercher une localité...'
-        });
-        map.addControl(searchControl);
+        var searchControl = null;
+        if (L.Control && L.Control.Search) {
+            searchControl = new L.Control.Search({
+                layer: layer_localites_5,
+                marker: false,
+                initial: false,
+                hideMarkerOnCollapse: true,
+                propertyName: 'NOM',
+                textPlaceholder: 'Rechercher une localité...'
+            });
+            map.addControl(searchControl);
+        }
         // When a search result is found, ensure the marker is visible (expand cluster) and open its popup
         searchControl.on('search:locationfound', function(e) {
             try {
@@ -1762,9 +1776,11 @@
             }
         });
         if (typeof url === 'undefined') {
-            document.getElementsByClassName('search-button')[0].className += ' fa fa-binoculars';
+            var sb0 = document.getElementsByClassName('search-button')[0];
+            if (sb0) sb0.className += ' fa fa-binoculars';
         } else {
-            document.getElementsByClassName('search-button')[1].className += ' fa fa-binoculars';
+            var sb1 = document.getElementsByClassName('search-button')[1];
+            if (sb1) sb1.className += ' fa fa-binoculars';
         }
 
         // Labels
