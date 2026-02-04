@@ -1858,19 +1858,22 @@
         // Recherche: initialized after localities are loaded (see initSearchControl)
 
         // Labels
+        var ENABLE_REGION_TOOLTIPS = false; // perf: disable permanent region tooltips
         var ENABLE_LOCALITE_TOOLTIPS = false; // perf: disable permanent localite tooltips
         var labels = [];
         var totalMarkers = 0;
-        layer_Region_1.eachLayer(function(layer) {
-            var context = {
-                feature: layer.feature,
-                variables: {}
-            };
-            layer.bindTooltip((layer.feature.properties['Région'] != null?String('<div class="tooltip-text tooltip-region">' + layer.feature.properties['Région']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_Region_1'});
-            labels.push(layer);
-            totalMarkers += 1;
-            layer.added = true;
-        });
+        if (ENABLE_REGION_TOOLTIPS) {
+            layer_Region_1.eachLayer(function(layer) {
+                var context = {
+                    feature: layer.feature,
+                    variables: {}
+                };
+                layer.bindTooltip((layer.feature.properties['Région'] != null?String('<div class="tooltip-text tooltip-region">' + layer.feature.properties['Région']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_Region_1'});
+                labels.push(layer);
+                totalMarkers += 1;
+                layer.added = true;
+            });
+        }
         if (ENABLE_LOCALITE_TOOLTIPS && layer_localites_5 && layer_localites_5.eachLayer) {
             layer_localites_5.eachLayer(function(layer) {
                 var context = {
@@ -1903,7 +1906,8 @@
         }
         
         function _getLabelLayers() {
-            var arr = [layer_Region_1];
+            var arr = [];
+            if (ENABLE_REGION_TOOLTIPS) arr.push(layer_Region_1);
             // Localités are lazy-loaded. Avoid crashing when the layer isn't created yet.
             if (layer_localites_5 && layer_localites_5.eachLayer) arr.push(layer_localites_5);
             return arr;
