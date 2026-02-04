@@ -1756,25 +1756,27 @@
             map.addControl(searchControl);
         }
         // When a search result is found, ensure the marker is visible (expand cluster) and open its popup
-        searchControl.on('search:locationfound', function(e) {
-            try {
-                if (e.layer) {
-                    // If marker is inside a cluster, ask cluster to show it
-                    if (typeof cluster_localites_5 !== 'undefined' && cluster_localites_5 && cluster_localites_5.zoomToShowLayer) {
-                        cluster_localites_5.zoomToShowLayer(e.layer, function() {
+        if (searchControl && searchControl.on) {
+            searchControl.on('search:locationfound', function(e) {
+                try {
+                    if (e.layer) {
+                        // If marker is inside a cluster, ask cluster to show it
+                        if (typeof cluster_localites_5 !== 'undefined' && cluster_localites_5 && cluster_localites_5.zoomToShowLayer) {
+                            cluster_localites_5.zoomToShowLayer(e.layer, function() {
+                                if (e.layer._popup) e.layer.openPopup();
+                            });
+                        } else {
                             if (e.layer._popup) e.layer.openPopup();
-                        });
-                    } else {
-                        if (e.layer._popup) e.layer.openPopup();
-                        else if (e.latlng) map.setView(e.latlng, 16);
+                            else if (e.latlng) map.setView(e.latlng, 16);
+                        }
+                    } else if (e.latlng) {
+                        map.setView(e.latlng, 16);
                     }
-                } else if (e.latlng) {
-                    map.setView(e.latlng, 16);
+                } catch (err) {
+                    if (e.latlng) map.setView(e.latlng, 16);
                 }
-            } catch (err) {
-                if (e.latlng) map.setView(e.latlng, 16);
-            }
-        });
+            });
+        }
         if (typeof url === 'undefined') {
             var sb0 = document.getElementsByClassName('search-button')[0];
             if (sb0) sb0.className += ' fa fa-binoculars';
