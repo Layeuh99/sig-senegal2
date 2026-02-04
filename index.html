@@ -26,7 +26,8 @@
         <link rel="stylesheet" href="css/leaflet-search.css">
         <link rel="stylesheet" href="css/leaflet-measure.css">
         <link rel="stylesheet" href="https://unpkg.com/leaflet-minimap@3.6.1/dist/Control.MiniMap.min.css">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <!-- Use local FontAwesome (already bundled in the project) to reduce external requests on mobile Safari -->
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
         <style>
         * {
             box-sizing: border-box;
@@ -1910,8 +1911,11 @@
         map.on("layeradd", resetLabelsHandler);
         map.on("layerremove", resetLabelsHandler);
 
-        // Ajouter les couches à la carte
+        // Ajouter les couches à la carte (show main admin layers by default)
         map.addLayer(layer_Region_1);
+        map.addLayer(layer_Departement_2);
+        map.addLayer(layer_Arrondissement_3);
+        map.addLayer(layer_Routes_4);
 
         // Créer la légende
         var legendHtml = '<div>';
