@@ -1046,11 +1046,50 @@
         <script src="data/Departement_2.js"></script>
         <script src="data/Arrondissement_3.js"></script>
         <script src="data/Routes_4.js"></script>
-        <script src="data/localites_5.js"></script>
         <script>
         var highlightLayer;
         var spatialQueryActive = false;
         var currentQueryLayerType = 'region';
+        // Base path for assets when deployed under a subfolder (GitHub Pages /sig-senegal2/ or Tomcat context path)
+        var APP_BASE_PATH = (function() {
+            var p = window.location.pathname || '/';
+            return p.endsWith('/') ? p : p.substring(0, p.lastIndexOf('/') + 1);
+        })();
+
+        // Lazy-load heavy datasets (notably localites_5.js) to speed up initial load on mobile.
+        var localitesInitDone = false;
+        var localitesInitPromise = null;
+        function loadScriptOnce(src) {
+            return new Promise(function(resolve, reject) {
+                // If script already exists, resolve quickly
+                var existing = document.querySelector('script[data-dynamic-src="' + src.replace(/"/g, '&quot;') + '"]');
+                if (existing) { resolve(); return; }
+                var s = document.createElement('script');
+                s.src = src;
+                s.async = true;
+                s.setAttribute('data-dynamic-src', src);
+                s.onload = function() { resolve(); };
+                s.onerror = function() { reject(new Error('Failed to load ' + src)); };
+                document.head.appendChild(s);
+            });
+        }
+
+        function ensureLocalitesLoaded() {
+            if (localitesInitPromise) return localitesInitPromise;
+            localitesInitPromise = Promise.resolve()
+                .then(function() {
+                    // load the heavy data file only when needed
+                    return loadScriptOnce(APP_BASE_PATH + 'data/localites_5.js');
+                })
+                .then(function() {
+                    initLocalitesLayer();
+                })
+                .catch(function(err) {
+                    console.warn('Localités lazy-load failed:', err);
+                    throw err;
+                });
+            return localitesInitPromise;
+        }
         
         function highlightFeature(e) {
             highlightLayer = e.target;
@@ -1624,7 +1663,8 @@
         });
         bounds_group.addLayer(layer_Routes_4);
 
-        // Localités
+        // Localités (heavy dataset) - loaded on demand
+        var layer_localites_5 = null;
         function pop_localites_5(feature, layer) {
             layer.on({
                 mouseout: function(e) {
@@ -1703,26 +1743,77 @@
             };
         }
         
-        map.createPane('pane_localites_5');
-        map.getPane('pane_localites_5').style.zIndex = 405;
-        var layer_localites_5 = new L.geoJson(json_localites_5, {
-            attribution: '',
-            interactive: true,
-            dataVar: 'json_localites_5',
-            layerName: 'layer_localites_5',
-            pane: 'pane_localites_5',
-            onEachFeature: pop_localites_5,
-            pointToLayer: function (feature, latlng) {
-                var context = {
-                    feature: feature,
-                    variables: {}
-                };
-                // use circle markers styled by property value
-                return L.circleMarker(latlng, style_localites_5_0(feature));
-            },
-        });
-        bounds_group.addLayer(layer_localites_5);
-        cluster_localites_5.addLayer(layer_localites_5);
+        // Search is only meaningful once localities are loaded.
+        var searchControl = null;
+        function initSearchControl() {
+            if (searchControl || !layer_localites_5) return;
+            if (L.Control && L.Control.Search) {
+                searchControl = new L.Control.Search({
+                    layer: layer_localites_5,
+                    marker: false,
+                    initial: false,
+                    hideMarkerOnCollapse: true,
+                    propertyName: 'NOM',
+                    textPlaceholder: 'Rechercher une localité...'
+                });
+                map.addControl(searchControl);
+            }
+            // When a search result is found, ensure the marker is visible (expand cluster) and open its popup
+            if (searchControl && searchControl.on) {
+                searchControl.on('search:locationfound', function(e) {
+                    try {
+                        if (e.layer) {
+                            if (cluster_localites_5 && cluster_localites_5.zoomToShowLayer) {
+                                cluster_localites_5.zoomToShowLayer(e.layer, function() {
+                                    if (e.layer._popup) e.layer.openPopup();
+                                });
+                            } else {
+                                if (e.layer._popup) e.layer.openPopup();
+                                else if (e.latlng) map.setView(e.latlng, 16);
+                            }
+                        } else if (e.latlng) {
+                            map.setView(e.latlng, 16);
+                        }
+                    } catch (err) {
+                        if (e.latlng) map.setView(e.latlng, 16);
+                    }
+                });
+            }
+            // Add binocular icon if available
+            try {
+                var sb = document.getElementsByClassName('search-button')[0];
+                if (sb) sb.className += ' fa fa-binoculars';
+            } catch (e) {}
+        }
+
+        function initLocalitesLayer() {
+            if (localitesInitDone) return;
+            if (typeof json_localites_5 === 'undefined') {
+                throw new Error('json_localites_5 is not defined (localites_5.js not loaded)');
+            }
+
+            map.createPane('pane_localites_5');
+            map.getPane('pane_localites_5').style.zIndex = 405;
+
+            layer_localites_5 = new L.geoJson(json_localites_5, {
+                attribution: '',
+                interactive: true,
+                dataVar: 'json_localites_5',
+                layerName: 'layer_localites_5',
+                pane: 'pane_localites_5',
+                onEachFeature: pop_localites_5,
+                pointToLayer: function (feature, latlng) {
+                    // use circle markers styled by property value
+                    return L.circleMarker(latlng, style_localites_5_0(feature));
+                },
+            });
+
+            bounds_group.addLayer(layer_localites_5);
+            cluster_localites_5.addLayer(layer_localites_5);
+
+            initSearchControl();
+            localitesInitDone = true;
+        }
 
         // Appliquer les styles et popups
         layer_Region_1.eachLayer(function(layer) {
@@ -1742,48 +1833,7 @@
             pop_Routes_4(layer.feature, layer);
         });
 
-        // Recherche
-        var searchControl = null;
-        if (L.Control && L.Control.Search) {
-            searchControl = new L.Control.Search({
-                layer: layer_localites_5,
-                marker: false,
-                initial: false,
-                hideMarkerOnCollapse: true,
-                propertyName: 'NOM',
-                textPlaceholder: 'Rechercher une localité...'
-            });
-            map.addControl(searchControl);
-        }
-        // When a search result is found, ensure the marker is visible (expand cluster) and open its popup
-        if (searchControl && searchControl.on) {
-            searchControl.on('search:locationfound', function(e) {
-                try {
-                    if (e.layer) {
-                        // If marker is inside a cluster, ask cluster to show it
-                        if (typeof cluster_localites_5 !== 'undefined' && cluster_localites_5 && cluster_localites_5.zoomToShowLayer) {
-                            cluster_localites_5.zoomToShowLayer(e.layer, function() {
-                                if (e.layer._popup) e.layer.openPopup();
-                            });
-                        } else {
-                            if (e.layer._popup) e.layer.openPopup();
-                            else if (e.latlng) map.setView(e.latlng, 16);
-                        }
-                    } else if (e.latlng) {
-                        map.setView(e.latlng, 16);
-                    }
-                } catch (err) {
-                    if (e.latlng) map.setView(e.latlng, 16);
-                }
-            });
-        }
-        if (typeof url === 'undefined') {
-            var sb0 = document.getElementsByClassName('search-button')[0];
-            if (sb0) sb0.className += ' fa fa-binoculars';
-        } else {
-            var sb1 = document.getElementsByClassName('search-button')[1];
-            if (sb1) sb1.className += ' fa fa-binoculars';
-        }
+        // Recherche: initialized after localities are loaded (see initSearchControl)
 
         // Labels
         var ENABLE_LOCALITE_TOOLTIPS = false; // perf: disable permanent localite tooltips
@@ -1843,7 +1893,6 @@
 
         // Ajouter les couches à la carte
         map.addLayer(layer_Region_1);
-        map.addLayer(cluster_localites_5);
 
         // Créer la légende
         var legendHtml = '<div>';
@@ -1954,6 +2003,24 @@
             checkbox.addEventListener('change', function() {
                 var overlayName = this.value;
                 var layer = overlays[overlayName];
+
+                // Heavy dataset: load localities only when user enables the layer
+                if (overlayName === 'Localités') {
+                    if (this.checked) {
+                        ensureLocalitesLoaded().then(function() {
+                            map.addLayer(cluster_localites_5);
+                            // refresh labels (if enabled)
+                            try { refreshAllLabelsDebounced(); } catch(e) {}
+                        }).catch(function() {
+                            alert('Impossible de charger les Localités (données trop lourdes ou problème réseau).');
+                            checkbox.checked = false;
+                        });
+                    } else {
+                        map.removeLayer(cluster_localites_5);
+                    }
+                    return;
+                }
+
                 if (this.checked) {
                     map.addLayer(layer);
                 } else {
@@ -2651,7 +2718,22 @@
                         // reattach events for checkboxes in the copied content
                         setTimeout(function(){
                             var checkboxes = mobilePanel.querySelectorAll('input[name="layers-overlay"]');
-                            checkboxes.forEach(function(ch){ ch.addEventListener('change', function(){ var name = this.value; var layer = overlays[name]; if (this.checked) map.addLayer(layer); else map.removeLayer(layer); }); });
+                            checkboxes.forEach(function(ch){
+                                ch.addEventListener('change', function(){
+                                    var name = this.value;
+                                    var layer = overlays[name];
+                                    if (name === 'Localités') {
+                                        if (this.checked) {
+                                            ensureLocalitesLoaded().then(function(){ map.addLayer(cluster_localites_5); }).catch(function(){ alert('Impossible de charger les Localités.'); ch.checked = false; });
+                                        } else {
+                                            map.removeLayer(cluster_localites_5);
+                                        }
+                                        return;
+                                    }
+                                    if (this.checked) map.addLayer(layer);
+                                    else map.removeLayer(layer);
+                                });
+                            });
                             var basemapRadios = mobilePanel.querySelectorAll('input[name="basemap"]');
                             basemapRadios.forEach(function(r){ r.addEventListener('change', function(){ var basemapName = this.value; for (var name in basemaps) { if (map.hasLayer(basemaps[name])) map.removeLayer(basemaps[name]); } map.addLayer(basemaps[basemapName]); }); });
                         }, 50);
