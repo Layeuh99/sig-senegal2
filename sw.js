@@ -1,19 +1,20 @@
-const CACHE_NAME = 'sig-senegal-cache-v1';
-const OFFLINE_URL = '/offline.html';
+// NOTE: Keep URLs relative so the PWA also works when deployed under a context path (e.g. /sig-senegal2)
+const CACHE_NAME = 'sig-senegal-cache-v2';
+const OFFLINE_URL = 'offline.html';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/offline.html',
-  '/manifest.json',
-  '/css/leaflet.css',
-  '/css/L.Control.Locate.min.css',
-  '/css/MarkerCluster.css',
-  '/css/MarkerCluster.Default.css',
-  '/css/leaflet-search.css',
-  '/css/leaflet-measure.css',
-  '/js/leaflet.js',
-  '/js/L.Control.Locate.min.js',
-  '/images/icons/icon-192.svg'
+  './',
+  'index.html',
+  'offline.html',
+  'manifest.json',
+  'css/leaflet.css',
+  'css/L.Control.Locate.min.css',
+  'css/MarkerCluster.css',
+  'css/MarkerCluster.Default.css',
+  'css/leaflet-search.css',
+  'css/leaflet-measure.css',
+  'js/leaflet.js',
+  'js/L.Control.Locate.min.js',
+  'images/icons/icon-192.svg'
 ];
 
 self.addEventListener('install', function(event) {
