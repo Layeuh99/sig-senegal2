@@ -1786,6 +1786,7 @@
         }
 
         // Labels
+        var ENABLE_LOCALITE_TOOLTIPS = false; // perf: disable permanent localite tooltips
         var labels = [];
         var totalMarkers = 0;
         layer_Region_1.eachLayer(function(layer) {
@@ -1798,16 +1799,18 @@
             totalMarkers += 1;
             layer.added = true;
         });
-        layer_localites_5.eachLayer(function(layer) {
-            var context = {
-                feature: layer.feature,
-                variables: {}
-            };
-            layer.bindTooltip((layer.feature.properties['NOM'] != null?String('<div class="tooltip-text tooltip-localite">' + layer.feature.properties['NOM']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_localites_5'});
-            labels.push(layer);
-            totalMarkers += 1;
-            layer.added = true;
-        });
+        if (ENABLE_LOCALITE_TOOLTIPS) {
+            layer_localites_5.eachLayer(function(layer) {
+                var context = {
+                    feature: layer.feature,
+                    variables: {}
+                };
+                layer.bindTooltip((layer.feature.properties['NOM'] != null?String('<div class="tooltip-text tooltip-localite">' + layer.feature.properties['NOM']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_localites_5'});
+                labels.push(layer);
+                totalMarkers += 1;
+                layer.added = true;
+            });
+        }
 
         function resetLabels(layers) {
             map.off("layeradd", resetLabelsHandler);
@@ -2044,7 +2047,7 @@
         }
 
         // Update labels on zoom and when overlays change
-        map.on('zoomend moveend resize viewreset', function(){
+        map.on('zoomend resize viewreset', function(){
             // determine visibility rules
             Object.keys(labelConfig).forEach(function(k){ updateLabelVisibility(k); });
             // then refresh positions
